@@ -77,7 +77,7 @@ public class InfoEntryView extends View {
         okPaint.setStrokeWidth(10);
         okPaint.setAntiAlias(true);
         okPaint.setColor(getResources().getColor(android.R.color.holo_green_dark));
-        okPaint.setStyle(Paint.Style.FILL);
+        okPaint.setStyle(Paint.Style.STROKE);
     }
 
     @Override
@@ -174,8 +174,7 @@ public class InfoEntryView extends View {
     /**
      * 绘制对勾的动画
      */
-    DashPathEffect effect;
-    private void set_draw_ok_animation() {
+    DashPathEffect effect;    private void set_draw_ok_animation() {
         initPath();
         valueAnimatorOk = ValueAnimator.ofFloat(1, 0);
         valueAnimatorOk.setDuration(5000);
