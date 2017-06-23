@@ -2,6 +2,7 @@ package com.abe.dwwd.infoentrycusview;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -12,6 +13,7 @@ import android.graphics.PathMeasure;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -20,17 +22,20 @@ import android.view.View;
  */
 
 public class InfoEntryView extends View {
+    private static final String TAG = "InfoEntryView";
     private static final int EXCETING = 1;
     private static final int FINISH = 2;
-    private ValueAnimator valueAnimatorChange, valueAnimatorMove,valueAnimatorOk;
+    private ValueAnimator valueAnimatorChange, valueAnimatorMove, valueAnimatorOk;
     private float cirleDistanceX = 0;
     private float cirleRadius = 10;
     private int height, weight, defineCircleWeightDistance;
-    private Paint paint, textPaint,okPaint;
+    private Paint paint, textPaint, okPaint;
     private int statue = FINISH;
     private String text = "确定";
     private Path path;
     private PathMeasure pathMeasure;
+    private AnimatorSet animatorSet;
+    private boolean startDrawOk = false;
 
     public InfoEntryView(Context context) {
         this(context, null);
@@ -52,11 +57,13 @@ public class InfoEntryView extends View {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        height = getHeight();
-        weight = getWidth();
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        height = h;
+        weight = w;
         defineCircleWeightDistance = (weight - height) / 2;
+        initPath();
+        initAnimator();
     }
 
     //初始化画笔
@@ -82,14 +89,34 @@ public class InfoEntryView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        Log.e(TAG, event.getAction() + "");
         switch (event.getAction()) {
+            case MotionEvent.ACTION_UP:
+                if (statue == FINISH) {
+                    start();
+                }
             case MotionEvent.ACTION_DOWN:
                 if (statue == FINISH) {
-                    changeRectCircluarAnim();
                     return true;
                 }
         }
         return super.onTouchEvent(event);
+    }
+
+    private void initAnimator() {
+        animatorSet = new AnimatorSet();
+        changeRectCircluarAnim();
+        moveRectCircleAnim();
+        okAnimation();
+        animatorSet
+                .play(valueAnimatorChange)
+                .with(valueAnimatorMove)
+                .before(valueAnimatorOk);
+    }
+
+    private void start() {
+        animatorSet.start();
+        statue = EXCETING;
     }
 
     //画圆角矩形
@@ -101,7 +128,7 @@ public class InfoEntryView extends View {
         rectF.right = weight - cirleDistanceX;
         canvas.drawRoundRect(rectF, cirleRadius, cirleRadius, paint);
         canvas.drawText(text, (weight - textPaint.measureText(text)) / 2, getBaseLineY(height / 2), textPaint);
-        if (path != null) {
+        if (startDrawOk) {
             canvas.drawPath(path, okPaint);
         }
     }
@@ -117,20 +144,6 @@ public class InfoEntryView extends View {
                 invalidate();
             }
         });
-        valueAnimatorChange.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                set_draw_ok_animation();
-//                moveRectCircleAnim();
-            }
-
-            @Override
-            public void onAnimationStart(Animator animation) {
-                statue = EXCETING;
-            }
-
-        });
-        valueAnimatorChange.start();
     }
 
     //移动圆形
@@ -145,18 +158,6 @@ public class InfoEntryView extends View {
                 invalidate();
             }
         });
-        valueAnimatorMove.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                set_draw_ok_animation();
-            }
-
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-        });
-        valueAnimatorMove.start();
     }
 
     private float getBaseLineY(float centerY) {
@@ -168,26 +169,32 @@ public class InfoEntryView extends View {
         path.moveTo(defineCircleWeightDistance + height / 8 * 3, height / 2);
         path.lineTo(defineCircleWeightDistance + height / 2, height / 5 * 3);
         path.lineTo(defineCircleWeightDistance + height / 3 * 2, height / 5 * 2);
-         pathMeasure = new PathMeasure(path,true);
+        pathMeasure = new PathMeasure(path, true);
     }
 
     /**
      * 绘制对勾的动画
      */
-    DashPathEffect effect;    private void set_draw_ok_animation() {
-        initPath();
+    DashPathEffect effect;
+
+    private void okAnimation() {
         valueAnimatorOk = ValueAnimator.ofFloat(1, 0);
-        valueAnimatorOk.setDuration(5000);
+        valueAnimatorOk.setDuration(1000);
         valueAnimatorOk.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
+                startDrawOk = true;
                 float value = (Float) animation.getAnimatedValue();
-                statue = FINISH;
                 effect = new DashPathEffect(new float[]{pathMeasure.getLength(), pathMeasure.getLength()}, value * pathMeasure.getLength());
                 okPaint.setPathEffect(effect);
                 invalidate();
             }
         });
-        valueAnimatorOk.start();
+        valueAnimatorOk.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                statue = FINISH;
+            }
+        });
     }
 }
