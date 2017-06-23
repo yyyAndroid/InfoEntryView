@@ -21,31 +21,33 @@ import android.view.View;
  * Created by abe on 2017/6/21.
  */
 
-public class InfoEntryView extends View {
+public class InfoEntryButtonView extends View {
     private static final String TAG = "InfoEntryView";
     private static final int EXCETING = 1;
     private static final int FINISH = 2;
+    private static final int IDLE = 3;
     private ValueAnimator valueAnimatorChange, valueAnimatorMove, valueAnimatorOk;
     private float cirleDistanceX = 0;
     private float cirleRadius = 10;
+    private int defineTextSize = 40;
     private int height, weight, defineCircleWeightDistance;
     private Paint paint, textPaint, okPaint;
-    private int statue = FINISH;
+    private int statue = IDLE;
     private String text = "确定";
     private Path path;
     private PathMeasure pathMeasure;
     private AnimatorSet animatorSet;
     private boolean startDrawOk = false;
 
-    public InfoEntryView(Context context) {
+    public InfoEntryButtonView(Context context) {
         this(context, null);
     }
 
-    public InfoEntryView(Context context, @Nullable AttributeSet attrs) {
+    public InfoEntryButtonView(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public InfoEntryView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public InfoEntryButtonView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initPaint();
     }
@@ -76,7 +78,7 @@ public class InfoEntryView extends View {
 
         textPaint = new Paint();
         textPaint.setColor(getResources().getColor(android.R.color.holo_red_light));
-        textPaint.setTextSize(40);
+        textPaint.setTextSize(defineTextSize);
         textPaint.setStyle(Paint.Style.FILL);
         textPaint.setAntiAlias(false);
 
@@ -92,11 +94,11 @@ public class InfoEntryView extends View {
         Log.e(TAG, event.getAction() + "");
         switch (event.getAction()) {
             case MotionEvent.ACTION_UP:
-                if (statue == FINISH) {
+                if (statue == IDLE) {
                     start();
                 }
             case MotionEvent.ACTION_DOWN:
-                if (statue == FINISH) {
+                if (statue == IDLE) {
                     return true;
                 }
         }
@@ -176,7 +178,6 @@ public class InfoEntryView extends View {
      * 绘制对勾的动画
      */
     DashPathEffect effect;
-
     private void okAnimation() {
         valueAnimatorOk = ValueAnimator.ofFloat(1, 0);
         valueAnimatorOk.setDuration(1000);
@@ -196,5 +197,15 @@ public class InfoEntryView extends View {
                 statue = FINISH;
             }
         });
+    }
+
+    public void resetView(){
+        statue = IDLE;
+        cirleDistanceX = 0;
+        cirleRadius = 10;
+        effect = new DashPathEffect(new float[]{pathMeasure.getLength(),pathMeasure.getLength()},pathMeasure.getLength());
+        okPaint.setPathEffect(effect);
+        textPaint.setAlpha(255);
+        invalidate();
     }
 }

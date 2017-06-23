@@ -1,1 +1,1 @@
-include ':app', ':infoentrycusview'
+include ':app', ':infoEntryButtonView'
